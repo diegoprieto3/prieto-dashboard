@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async function(event) {
   const callId = event.queryStringParameters?.callId;
   if (!callId) {
@@ -18,7 +16,9 @@ exports.handler = async function(event) {
       return { statusCode: response.status, body: 'Failed to fetch recording' };
     }
 
-    const buffer = await response.buffer();
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
     return {
       statusCode: 200,
       headers: {
