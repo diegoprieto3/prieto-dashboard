@@ -398,17 +398,19 @@ let allCalls = [];
 
 async function loadRecording(audioId, callId) {
   const audio = document.getElementById('audio-' + audioId);
+  const btn = audio ? audio.parentElement.querySelector('button') : null;
   if (!audio) return;
-  audio.parentElement.querySelector('button').textContent = 'Cargando...';
+  if (btn) btn.textContent = 'Loading...';
   try {
     const res = await fetch(`/.netlify/functions/recording?callId=${callId}`);
     if (!res.ok) throw new Error('Error ' + res.status);
     const blob = await res.blob();
-    audio.src = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    audio.src = url;
     audio.play();
-    audio.parentElement.querySelector('button').style.display = 'none';
+    if (btn) btn.style.display = 'none';
   } catch(e) {
-    audio.parentElement.querySelector('button').textContent = 'Error al cargar';
+    if (btn) btn.textContent = 'Error loading';
   }
 }
 
