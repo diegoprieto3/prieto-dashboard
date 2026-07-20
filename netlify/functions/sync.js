@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+
 
 const VAPI_API_KEY = 'e19f3aaf-e171-4e14-80c4-57c4139328e7';
 const ASSISTANT_ID = '9d64157f-5083-4e89-9e00-4559bd485dff';
