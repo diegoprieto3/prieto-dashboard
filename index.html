@@ -372,7 +372,7 @@ function showSection(section) {
   document.getElementById('page-title').textContent = titles[section][0];
   document.getElementById('page-sub').textContent = titles[section][1];
   if (section === 'calllog') renderCallLogFull(allCalls);
-  if (section === 'analytics') renderAnalytics(allCalls);
+  if (section === 'analytics') loadAnalytics();
   if (section === 'archive') loadArchive();
   ['dashboard','calllog','analytics','archive'].forEach(s => {
     const mob = document.getElementById('mob-'+s);
@@ -567,13 +567,37 @@ async function loadArchive() {
   if (!list) return;
   list.innerHTML='<div class="loading-state"><span class="spin">↻</span> Cargando archivo...</div>';
   try {
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/calls?assistant_id=eq.${ASSISTANT_ID}&order=started_at.desc&limit=200`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/calls?assistant_id=eq.${ASSISTANT_ID}&order=started_at.desc&limit=2000`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
     if (!res.ok) throw new Error('Supabase error '+res.status);
     const calls=await res.json();
     if (!calls.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">🗄️</div><p>No hay llamadas archivadas todavía.</p></div>`;return;}
     list.innerHTML=calls.map(c=>archivedCardHTML(c)).join('');
   } catch(e) {
     list.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p style="color:#c00;">Error al cargar el archivo.</p><span style="font-size:12px;">${e.message}</span></div>`;
+  }
+}
+// "All time" analytics should reflect the permanent Supabase archive, not the
+// live Vapi call list (which loadCalls only fetches up to `limit` many of).
+async function loadAnalytics() {
+  const rDiv = document.getElementById('a-reasons');
+  if (rDiv) rDiv.innerHTML = '<div class="loading-state"><span class="spin">↻</span> Cargando...</div>';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/calls?assistant_id=eq.${ASSISTANT_ID}&order=started_at.desc&limit=5000`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error('Supabase error ' + res.status);
+    const rows = await res.json();
+    // Normalize Supabase's column names to the shape renderAnalytics() already expects
+    const mapped = rows.map(r => ({
+      createdAt: r.started_at,
+      startedAt: r.started_at,
+      endedAt: r.ended_at,
+      duration: r.duration,
+      endedReason: r.end_reason
+    }));
+    renderAnalytics(mapped);
+  } catch (e) {
+    if (rDiv) rDiv.innerHTML = `<div style="color:#c00;font-size:12px;">Error al cargar analíticas: ${e.message}</div>`;
   }
 }
 async function fetchCallDetail(id) {
@@ -586,7 +610,7 @@ async function fetchCallDetail(id) {
 async function loadCalls() {
   document.getElementById('call-list').innerHTML='<div class="loading-state"><span class="spin">↻</span> Loading calls...</div>';
   try {
-    const res=await fetch(`https://api.vapi.ai/call?limit=100&assistantId=${ASSISTANT_ID}`,{headers:{'Authorization':'Bearer '+API_KEY}});
+    const res=await fetch(`https://api.vapi.ai/call?limit=1000&assistantId=${ASSISTANT_ID}`,{headers:{'Authorization':'Bearer '+API_KEY}});
     if (!res.ok) throw new Error('API returned '+res.status);
     const data=await res.json();
     const calls=Array.isArray(data)?data:(data.results||data.calls||[]);
