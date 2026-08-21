@@ -1,5 +1,3 @@
-
-
 const VAPI_API_KEY = 'e19f3aaf-e171-4e14-80c4-57c4139328e7';
 const ASSISTANT_ID = '9d64157f-5083-4e89-9e00-4559bd485dff';
 const SUPABASE_URL = 'https://haxozjahcnktbliephdx.supabase.co';
@@ -7,7 +5,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 exports.handler = async function(event, context) {
   try {
-    const vapiRes = await fetch(`https://api.vapi.ai/call?assistantId=${ASSISTANT_ID}&limit=100`, {
+    const vapiRes = await fetch(`https://api.vapi.ai/call?assistantId=${ASSISTANT_ID}&limit=1000`, {
       headers: { 'Authorization': `Bearer ${VAPI_API_KEY}` }
     });
     if (!vapiRes.ok) throw new Error('Vapi error ' + vapiRes.status);
