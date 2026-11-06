@@ -1,12 +1,18 @@
 exports.handler = async function(event) {
   const callId = event.queryStringParameters?.callId;
+  if (!/^[0-9a-f-]{36}$/i.test(callId || '')) return { statusCode: 400, body: 'Invalid callId' };
   if (!callId) {
     return { statusCode: 400, body: 'Missing callId' };
   }
 
-  const API_KEY = 'e19f3aaf-e171-4e14-80c4-57c4139328e7';
+  const VAPI_API_KEY = process.env.VAPI_API_KEY;
+const API_KEY = VAPI_API_KEY;
 
   try {
+    const check = await fetch(`https://api.vapi.ai/call/${callId}`, { headers: { Authorization: `Bearer ${API_KEY}` } });
+    if (!check.ok) return { statusCode: 404, body: 'Not found' };
+    const call = await check.json();
+    if (call.assistantId !== process.env.VAPI_ASSISTANT_ID) return { statusCode: 403, body: 'Forbidden' };
     const response = await fetch(`https://api.vapi.ai/call/${callId}/mono-recording`, {
       headers: { 'Authorization': `Bearer ${API_KEY}` },
       redirect: 'follow'
@@ -32,3 +38,6 @@ exports.handler = async function(event) {
     return { statusCode: 500, body: 'Error: ' + e.message };
   }
 };
+
+const {withAuth} = require('./_auth');
+exports.handler = withAuth(exports.handler);
